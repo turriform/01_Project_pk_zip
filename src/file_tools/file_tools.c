@@ -1,6 +1,7 @@
 #include "framework.h"
 #include "file_tools/file_tools.h"
 #include "pk_zip/pk_zip.h"
+int fileno(FILE *stream);
 void bits_convert(uint8_t buff[], size_t value, size_t size)
 {
     const uint8_t bits = 8;
@@ -30,7 +31,6 @@ bool file_find_signature(FILE *fp, size_t value, size_t size)
     uint8_t sig[size];
     //converting magic number to bytes array
     bits_convert(sig, value, size);
-    uint8_t c;
     while (fread(&buff, size, 1, fp))
     {
         // fseek(fp, -(size - 1), SEEK_CUR);
@@ -43,14 +43,14 @@ bool file_find_signature(FILE *fp, size_t value, size_t size)
     return false;
 }
 
-bool _file_main_type_contains(FILE *fp, file_data_t *filedata, size_t signature, size_t sig_sz)
+bool _file_main_type_contains(FILE *fp,  size_t signature, size_t sig_sz)
 {
     // moving fp to the top since we're looking for the main single file
     fseek(fp, 0, SEEK_SET);
     bool found = file_find_signature(fp, signature, sig_sz);
 
     return found ? true : false;
-};
+}
 
 void _file_main_type_ends(FILE *fp, size_t signature, size_t sig_sz)
 {
@@ -71,7 +71,7 @@ void file_main_type_extract(FILE *fp, file_main_t type)
         file_string = "./output/file_extract.jpeg";
     }
 
-    size_t start = 0, end = ftell(fp);
+    size_t end = ftell(fp);
     fseek(fp, 0, SEEK_SET);
     uint8_t buff[end];
     fread(buff, end, 1, fp);
@@ -85,11 +85,10 @@ bool _file_conains_lfh(FILE *fp)
     bool found = file_find_signature(fp, PK_ZIP_SIG, PK_ZIP_SIG_SZ);
 
     return found ? true : false;
-};
+}
 
 void file_find_all_lfh(FILE *fp)
 {
-    uint16_t c;
     int total = 0;
 
     bool found = _file_conains_lfh(fp);
@@ -110,7 +109,7 @@ void file_find_all_lfh(FILE *fp)
         found = _file_conains_lfh(fp);
     }
 
-    printf("Total files %ld \n", total);
+    printf("Total files %d \n", total);
 }
 
 void file_contains_zip(file_data_t *filedata, size_t filesize, size_t current_pos)
@@ -125,7 +124,7 @@ void file_look_for_main_file(FILE *fp, file_data_t *filedata)
     //then looking for the end                   _file_main_type_ends()  
     //checking only for 2 file types (PNG, JPEG)
 
-    bool main_jpeg = _file_main_type_contains(fp, filedata, JPEG_START, JPEG_START_SZ);
+    bool main_jpeg = _file_main_type_contains(fp, JPEG_START, JPEG_START_SZ);
     if (main_jpeg)
     {
         filedata->main_file_type = JPEG;
@@ -134,7 +133,7 @@ void file_look_for_main_file(FILE *fp, file_data_t *filedata)
         return;
     }
     fseek(fp, 0, SEEK_SET);
-    bool main_png = _file_main_type_contains(fp, filedata, PNG_START, PNG_START_SZ);
+    bool main_png = _file_main_type_contains(fp,  PNG_START, PNG_START_SZ);
 
     if (main_png)
     {
@@ -168,9 +167,9 @@ void init(char * filepath)
     }
 
     struct stat file_system_stat;
-    fstat(fileno(fp), &file_system_stat);
+    fstat((int)fileno(fp), &file_system_stat);
 
-    file_data_t filedata = {};
+    file_data_t filedata = {0};
     file_look_for_main_file(fp, &filedata);
     file_contains_zip(&filedata, (size_t)file_system_stat.st_size, (size_t)ftell(fp));
 

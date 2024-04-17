@@ -13,7 +13,7 @@ TARGET:= ./bin/$(PROG)
 ARGS:= $(wildcard ./assets/*.jpg ./assets/*.png)
 
 all:
-	$(CC) $(C_SRC) $(INCLUDE) -o $(TARGET) && $(TARGET) $(ARGS)
+	$(CC) $(FLAGS) $(C_SRC) $(INCLUDE) -o $(TARGET) && $(TARGET) $(ARGS)
 
 
 val:

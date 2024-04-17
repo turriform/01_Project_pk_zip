@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    for (size_t i = 1; i != argc; i++)
+    for (int i = 1; i != argc; i++)
     {
         printf("\nChecking for file %s \n", argv[i]);
         init(argv[i]);
